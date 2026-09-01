@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#26352f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Hunting Packing List" />
+  <meta name="description" content="A smart, checkable hunting-trip packing list generator." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icons/icon-180.png" />
+  <link rel="icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Hunting Packing List</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">FIELD READY</p>
+        <h1>Hunting Packing List</h1>
+        <p class="subhead">Build a trip-specific checklist from your dates, location, conditions, and game.</p>
+      </div>
+      <button id="aboutBtn" class="icon-btn" type="button" aria-label="About this app">i</button>
+    </header>
+
+    <main>
+      <section class="card planner-card" aria-labelledby="trip-heading">
+        <div class="section-heading">
+          <div>
+            <p class="kicker">TRIP PROFILE</p>
+            <h2 id="trip-heading">Tell me about the hunt</h2>
+          </div>
+        </div>
+
+        <form id="tripForm" novalidate>
+          <div class="form-grid two-col">
+            <label class="field">
+              <span>Start date</span>
+              <input id="startDate" name="startDate" type="date" required />
+            </label>
+            <label class="field">
+              <span>End date</span>
+              <input id="endDate" name="endDate" type="date" required />
+            </label>
+          </div>
+
+          <div class="duration-line" id="durationLine">Choose dates to calculate trip duration.</div>
+
+          <label class="field">
+            <span>Location</span>
+            <input id="location" name="location" type="text" autocomplete="off" placeholder="e.g. Black Gap WMA, Texas" required />
+            <small>City, county, WMA, forest, or region works. Live weather is used when available.</small>
+          </label>
+
+          <fieldset class="game-fieldset">
+            <legend>Game hunted</legend>
+            <p class="field-help">Select one or more. Mixed hunts merge shared gear automatically.</p>
+            <div class="game-grid">
+              <label class="game-choice">
+                <input name="games" type="checkbox" value="upland" />
+                <span><strong>Upland birds</strong><small>Quail, pheasant, chukar, woodcock</small></span>
+              </label>
+              <label class="game-choice">
+                <input name="games" type="checkbox" value="waterfowl" />
+                <span><strong>Waterfowl</strong><small>Ducks and geese</small></span>
+              </label>
+              <label class="game-choice">
+                <input name="games" type="checkbox" value="dove" />
+                <span><strong>Dove</strong><small>High-volume wingshooting</small></span>
+              </label>
+              <label class="game-choice">
+                <input name="games" type="checkbox" value="deer" />
+                <span><strong>Deer</strong><small>Stand, blind, or spot-and-stalk</small></span>
+              </label>
+              <label class="game-choice">
+                <input name="games" type="checkbox" value="turkey" />
+                <span><strong>Turkey</strong><small>Calling and concealment gear</small></span>
+              </label>
+              <label class="game-choice">
+                <input name="games" type="checkbox" value="hog" />
+                <span><strong>Feral hog</strong><small>Day or low-light hunts</small></span>
+              </label>
+              <label class="game-choice">
+                <input name="games" type="checkbox" value="elk" />
+                <span><strong>Western big game</strong><small>Elk, pronghorn, similar hunts</small></span>
+              </label>
+              <label class="game-choice">
+                <input name="games" type="checkbox" value="smallgame" />
+                <span><strong>Small game</strong><small>Squirrel, rabbit, similar game</small></span>
+              </label>
+              <label class="game-choice">
+                <input name="games" type="checkbox" value="predator" />
+                <span><strong>Predator / varmint</strong><small>Calling and longer observation</small></span>
+              </label>
+              <label class="game-choice">
+                <input name="games" type="checkbox" value="other" />
+                <span><strong>Other</strong><small>Add specialized gear as custom items</small></span>
+              </label>
+            </div>
+          </fieldset>
+
+          <details class="options-panel">
+            <summary>Optional details for a better list</summary>
+            <div class="options-body">
+              <label class="field">
+                <span>Trip style</span>
+                <select id="tripStyle" name="tripStyle">
+                  <option value="day">Day trip / return home</option>
+                  <option value="lodge">Lodge / hotel / cabin</option>
+                  <option value="vehicle" selected>Vehicle camping</option>
+                  <option value="backcountry">Backcountry / pack-in</option>
+                </select>
+              </label>
+
+              <label class="switch-row">
+                <input id="withDog" type="checkbox" />
+                <span>
+                  <strong>Hunting with a dog</strong>
+                  <small>Adds dog water, first aid, tracking, food, and field-care items.</small>
+                </span>
+              </label>
+
+              <label class="switch-row">
+                <input id="processing" type="checkbox" checked />
+                <span>
+                  <strong>Plan to transport/process game</strong>
+                  <small>Adds coolers, game bags, knives, gloves, ice planning, and cleanup gear.</small>
+                </span>
+              </label>
+
+              <label class="switch-row">
+                <input id="liveWeather" type="checkbox" checked />
+                <span>
+                  <strong>Use live weather when available</strong>
+                  <small>No account or API key required. Weather is fetched from Open-Meteo.</small>
+                </span>
+              </label>
+            </div>
+          </details>
+
+          <p id="formError" class="form-error" role="alert" hidden></p>
+          <button class="primary-btn" type="submit">
+            <span>Generate packing list</span>
+            <span aria-hidden="true">→</span>
+          </button>
+        </form>
+      </section>
+
+      <section id="resultSection" class="results" hidden aria-live="polite">
+        <div class="trip-summary card">
+          <div class="summary-top">
+            <div>
+              <p class="kicker">YOUR HUNT</p>
+              <h2 id="summaryTitle">Packing list</h2>
+            </div>
+            <button id="editTripBtn" class="secondary-btn compact" type="button">Edit trip</button>
+          </div>
+          <div id="summaryChips" class="chips"></div>
+          <div id="weatherNote" class="weather-note"></div>
+          <div class="progress-wrap" aria-label="Packing progress">
+            <div class="progress-label"><span id="progressText">0 of 0 packed</span><strong id="progressPct">0%</strong></div>
+            <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+          </div>
+        </div>
+
+        <div class="toolbar card">
+          <div class="filter-group" role="group" aria-label="Checklist filter">
+            <button class="filter-btn active" type="button" data-filter="all">All</button>
+            <button class="filter-btn" type="button" data-filter="unpacked">Unpacked</button>
+            <button class="filter-btn" type="button" data-filter="packed">Packed</button>
+          </div>
+          <div class="toolbar-actions">
+            <button id="addItemBtn" class="secondary-btn" type="button">+ Custom item</button>
+            <button id="printBtn" class="secondary-btn" type="button">Print</button>
+            <button id="resetChecksBtn" class="ghost-btn" type="button">Reset checks</button>
+          </div>
+        </div>
+
+        <div id="criticalCallout" class="critical-callout" hidden>
+          <strong>Before you leave</strong>
+          <span id="criticalText"></span>
+        </div>
+
+        <div id="checklist" class="checklist"></div>
+
+        <section class="card note-card">
+          <p class="kicker">FINAL CHECK</p>
+          <h3>Rules and conditions can change</h3>
+          <p>Confirm current season dates, legal methods, ammunition restrictions, tagging requirements, public-land rules, burn bans, and access/road conditions with the responsible wildlife and land-management agencies before departure.</p>
+        </section>
+      </section>
+    </main>
+
+    <footer>
+      <strong>Hunting Packing List</strong>
+      <span>Developer: Thomas Hopkins</span>
+      <span>Weather data: Open-Meteo · Packing logic developed with OpenAI assistance</span>
+    </footer>
+  </div>
+
+  <dialog id="customDialog">
+    <form method="dialog" id="customItemForm" class="dialog-card">
+      <div class="dialog-heading">
+        <div>
+          <p class="kicker">CUSTOM GEAR</p>
+          <h2>Add an item</h2>
+        </div>
+        <button id="closeCustomBtn" class="icon-btn" type="button" aria-label="Close">×</button>
+      </div>
+      <label class="field">
+        <span>Item</span>
+        <input id="customItemName" type="text" maxlength="80" placeholder="e.g. Spare dog bell" required />
+      </label>
+      <label class="field">
+        <span>Category</span>
+        <select id="customItemCategory">
+          <option>Hunting Gear</option>
+          <option>Clothing</option>
+          <option>Safety & Navigation</option>
+          <option>Food & Water</option>
+          <option>Camp & Sleep</option>
+          <option>Vehicle</option>
+          <option>Game Care</option>
+          <option>Dog Gear</option>
+          <option>Documents & Legal</option>
+          <option>Miscellaneous</option>
+        </select>
+      </label>
+      <button id="saveCustomItem" class="primary-btn" value="default">Add to list</button>
+    </form>
+  </dialog>
+
+  <dialog id="aboutDialog">
+    <div class="dialog-card">
+      <div class="dialog-heading">
+        <div>
+          <p class="kicker">ABOUT</p>
+          <h2>Hunting Packing List</h2>
+        </div>
+        <button id="closeAboutBtn" class="icon-btn" type="button" aria-label="Close">×</button>
+      </div>
+      <p>This app builds a practical checklist from your hunt type, trip length, travel style, location, and forecast conditions when available.</p>
+      <p>Your trip and checkmarks are stored only in this browser. The app does not require an account.</p>
+      <div class="about-credit">
+        <strong>Developer</strong>
+        <span>Thomas Hopkins</span>
+      </div>
+      <div class="about-credit">
+        <strong>Data / assistance</strong>
+        <span>Open-Meteo weather · OpenAI-assisted packing logic</span>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
