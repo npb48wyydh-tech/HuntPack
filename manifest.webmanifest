@@ -1,7 +1,7 @@
 {
   "name": "Hunting Packing List",
   "short_name": "Hunt List",
-  "description": "A smart, checkable hunting-trip packing list generator.",
+  "description": "A smart hunting packing list with party-size food, snack, beer, and water planning.",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#ede9df",

@@ -2,12 +2,14 @@
   'use strict';
 
   const STORAGE_KEY = 'huntingPackingList.v1';
+  const FOOD_CATEGORY = 'Food / Snacks / Beer / Water';
   const el = (id) => document.getElementById(id);
 
   const form = el('tripForm');
   const startDate = el('startDate');
   const endDate = el('endDate');
   const locationInput = el('location');
+  const hunterCountInput = el('hunterCount');
   const gameInputs = () => [...document.querySelectorAll('input[name="games"]')];
   const tripStyle = el('tripStyle');
   const withDog = el('withDog');
@@ -61,10 +63,7 @@
     item('Clothing', 'Hat / cap', 'Sun, rain, brush, or warmth as conditions require.', '1–2'),
     item('Clothing', 'High-visibility garment', 'Carry blaze orange/pink when required or prudent for the hunt.', '1'),
 
-    item('Food & Water', 'Drinking water', waterQty(ctx), 'Plan + reserve', true),
-    item('Food & Water', 'Electrolytes', 'Useful for hot weather, long walks, or high-output hunts.', ctx.days >= 2 ? 'Several servings' : '1–2 servings'),
-    item('Food & Water', 'Field food / snacks', 'Portable calories you will actually eat with cold or dirty hands.', foodQty(ctx), true),
-    item('Food & Water', 'Insulated bottle / thermos', 'Useful for hot or cold conditions.', '1'),
+    ...foodProvisioningItems(ctx),
 
     item('Miscellaneous', 'Sunscreen', 'Reapply during long open-country hunts.', '1'),
     item('Miscellaneous', 'Insect / tick repellent', 'Choose for the local season and vectors.', '1'),
@@ -172,8 +171,8 @@
       item('Camp & Sleep', 'Lightweight shelter', 'Include stakes/guylines appropriate to the terrain.', '1', true),
       item('Camp & Sleep', 'Sleeping bag / quilt', 'Temperature rating should fit forecast lows with margin.', '1', true),
       item('Camp & Sleep', 'Sleeping pad', '', '1'),
-      item('Food & Water', 'Water treatment', 'Filter/purifier plus backup tablets if water sources are uncertain.', '1 system', true),
-      item('Food & Water', 'Backcountry stove + fuel', 'Unless intentionally using a no-cook plan.', '1 set'),
+      item(FOOD_CATEGORY, 'Water treatment', 'Filter/purifier plus backup tablets if water sources are uncertain.', '1 system', true),
+      item(FOOD_CATEGORY, 'Backcountry stove + fuel', 'Unless intentionally using a no-cook plan.', '1 set'),
       item('Safety & Navigation', 'Satellite communicator / PLB', 'Strongly recommended beyond reliable cell service.', '1', true),
       item('Safety & Navigation', 'Emergency bivy / repair kit', 'Tape, cordage, patches, and shelter repair materials.', '1 kit'),
       item('Game Care', 'Pack-out capacity', 'Leave enough space/weight capacity for harvested game.', 'Planned', true)
@@ -227,11 +226,90 @@
     return ctx.days <= 2 ? 'Hunt supply + zero/check rounds' : 'Hunt supply + reserve';
   }
 
-  function waterQty(ctx) {
-    const hot = weatherContext?.hot;
+  function safeHunterCount(ctx) {
+    const n = Number(ctx?.hunters);
+    if (!Number.isFinite(n)) return 1;
+    return Math.min(20, Math.max(1, Math.round(n)));
+  }
+
+  function hunterDays(ctx) {
+    return safeHunterCount(ctx) * Math.max(1, Number(ctx.days) || 1);
+  }
+
+  function formatGallons(n) {
+    return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, '');
+  }
+
+  function waterRate(ctx) {
+    const hot = Boolean(weatherContext?.hot);
     const remote = ctx.tripStyle === 'backcountry' || /desert|wma|national forest|public land|backcountry|remote/i.test(ctx.location);
-    const daily = hot ? '1–1.5 gal/person/day' : remote ? '0.75–1 gal/person/day' : '0.5–1 gal/person/day';
-    return `${daily} × ${ctx.days} day${ctx.days === 1 ? '' : 's'}`;
+    if (hot) return [1, 1.5];
+    if (/desert|big bend|west texas|new mexico|arizona|nevada|utah/i.test(ctx.location)) return [1, 1.25];
+    if (remote) return [0.75, 1];
+    return [0.5, 1];
+  }
+
+  function waterQty(ctx) {
+    const hunters = safeHunterCount(ctx);
+    const [lowRate, highRate] = waterRate(ctx);
+    const low = lowRate * hunters * ctx.days;
+    const high = highRate * hunters * ctx.days;
+    return `${formatGallons(low)}–${formatGallons(high)} gal total + reserve`;
+  }
+
+  function waterCapacityQty(ctx) {
+    const hunters = safeHunterCount(ctx);
+    const [, highRate] = waterRate(ctx);
+    const high = highRate * hunters * ctx.days;
+    return `${formatGallons(high)}+ gal capacity or verified resupply`;
+  }
+
+  function waterNote(ctx) {
+    const hunters = safeHunterCount(ctx);
+    const [lowRate, highRate] = waterRate(ctx);
+    return `Planning baseline: ${lowRate}–${highRate} gal per hunter per day × ${hunters} hunter${hunters === 1 ? '' : 's'} × ${ctx.days} day${ctx.days === 1 ? '' : 's'}. Increase for heat, exertion, dry conditions, delays, and limited refill access.`;
+  }
+
+  function foodProvisioningItems(ctx) {
+    const hunters = safeHunterCount(ctx);
+    const hd = hunterDays(ctx);
+    const nights = Math.max(0, ctx.days - 1);
+    const hot = Boolean(weatherContext?.hot);
+    const remote = ctx.tripStyle === 'backcountry' || /desert|wma|national forest|public land|backcountry|remote/i.test(ctx.location);
+    const snackPortions = hd * 3;
+    const electrolyteServings = hd * (hot ? 2 : 1);
+    const items = [
+      item(FOOD_CATEGORY, 'Drinking water', waterNote(ctx), waterQty(ctx), true),
+      item(FOOD_CATEGORY, 'Water containers / refill plan', 'Carry enough container capacity for the planned supply and reserve; do not assume a listed water source is usable without verification.', waterCapacityQty(ctx), true),
+      item(FOOD_CATEGORY, 'Electrolytes', hot ? 'Plan roughly two servings per hunter-day during sustained heat or heavy sweating; use with adequate water.' : 'A simple planning baseline of one serving per hunter-day; pack more for heat or unusually hard exertion.', `${electrolyteServings} servings`),
+      item(FOOD_CATEGORY, 'Field snacks', 'Pack compact calories that are easy to eat one-handed or with cold/dirty hands. A mix of salty, carbohydrate, and protein options works well.', `${snackPortions} portions (3/hunter-day)`, true)
+    ];
+
+    if (ctx.tripStyle === 'day') {
+      items.push(item(FOOD_CATEGORY, 'Field meals / lunches', 'One substantial hunt-day meal per hunter, plus whatever is needed before or after the hunt.', `${hd} meal serving${hd === 1 ? '' : 's'}`, true));
+    } else if (ctx.tripStyle === 'lodge') {
+      items.push(item(FOOD_CATEGORY, 'Field lunches / hunt-day meals', 'Pack one field meal per hunter-day. Confirm which breakfasts and dinners are actually provided by the lodge/cabin before shopping.', `${hd} field meal serving${hd === 1 ? '' : 's'}`, true));
+      items.push(item(FOOD_CATEGORY, 'Breakfast / dinner backup', 'Keep an easy backup in case restaurants, lodge meals, or travel timing do not work out.', `${hunters}–${hunters * 2} shared backup serving${hunters * 2 === 1 ? '' : 's'}`));
+    } else {
+      items.push(item(FOOD_CATEGORY, 'Main meals / meal components', 'Planning baseline is breakfast, field lunch, and dinner for each hunter-day. Subtract meals you know will be eaten en route or elsewhere.', `${hd * 3} meal servings (${hd} hunter-day${hd === 1 ? '' : 's'})`, true));
+    }
+
+    items.push(item(FOOD_CATEGORY, 'Emergency food reserve', remote ? 'For remote trips, keep at least one extra person-day of shelf-stable food for the whole party.' : 'Carry a modest shelf-stable reserve for delays, weather, or a longer-than-planned hunt.', `${hunters} person-day${hunters === 1 ? '' : 's'} reserve`, true));
+    items.push(item(FOOD_CATEGORY, 'Coffee / hot drinks (optional)', 'Include sugar/creamer if wanted and account for stove fuel or hot-water access.', `${hd}–${hd * 2} servings`));
+
+    if (nights > 0) {
+      const maxBeer = hunters * nights * 2;
+      items.push(item(FOOD_CATEGORY, 'Beer / nonalcoholic camp drinks (optional)', 'Post-hunt only. Alcohol is for legal-age adults after firearms/bows are secured and when nobody will drive, boat, handle weapons, or perform safety-critical tasks. Reduce the quantity for non-drinkers or underage hunters.', `Up to ${maxBeer} total if all hunters are legal-age adults (2 × hunters × ${nights} evening${nights === 1 ? '' : 's'})`));
+    } else {
+      items.push(item(FOOD_CATEGORY, 'Beer / nonalcoholic post-hunt drinks (optional)', 'A day-trip pack generally does not need alcohol. If included, keep it post-hunt only, for legal-age adults, after firearms/bows are secured and with no driving or other safety-critical activity afterward.', 'Optional'));
+    }
+
+    if (ctx.tripStyle !== 'backcountry') {
+      const cooler = hd <= 2 ? '1 small/medium shared cooler' : hd <= 8 ? '1 medium/large shared cooler' : '1–2 large shared coolers';
+      items.push(item(FOOD_CATEGORY, 'Food / drink cooler + ice', 'Keep food and drinks separate from warm harvested game when practical. Pre-chill and plan ice replenishment for multi-day or hot-weather trips.', cooler));
+    }
+
+    return items;
   }
 
   function dogWaterQty(ctx) {
@@ -241,10 +319,6 @@
 
   function dogFoodQty(days) {
     return `${days} day${days === 1 ? '' : 's'} + 1 day reserve`;
-  }
-
-  function foodQty(ctx) {
-    return ctx.tripStyle === 'day' ? 'Hunt day + emergency snack' : `${ctx.days} day${ctx.days === 1 ? '' : 's'} + reserve`;
   }
 
   function weatherItems(ctx, wx) {
@@ -266,8 +340,6 @@
     }
     if (wx.hot) {
       items.push(item('Clothing', 'Sun hoodie / lightweight long sleeve', 'Useful for extended sun and brush exposure.', '1'));
-      items.push(item('Food & Water', 'Extra water reserve', 'Heat materially increases water requirements; cache or carry extra.', 'Additional reserve', true));
-      items.push(item('Food & Water', 'Extra electrolytes', 'Use with water during prolonged sweating.', 'Daily servings'));
     }
     if (wx.windy) {
       items.push(item('Clothing', 'Wind-resistant outer layer', 'Useful for exposed ridges, boats, blinds, and glassing.', '1'));
@@ -381,6 +453,8 @@
     const days = daysInclusive(s, e);
     if (days > 60) return showError('For a useful packing list, keep a single trip to 60 days or less.');
     if (!locationInput.value.trim()) return showError('Enter a hunt location.');
+    const hunters = Number(hunterCountInput.value);
+    if (!Number.isInteger(hunters) || hunters < 1 || hunters > 20) return showError('Enter a whole number of hunters from 1 to 20.');
     if (!getSelectedGames().length) return showError('Select at least one game species or hunt type.');
     return { s, e, days };
   }
@@ -400,6 +474,7 @@
       endDate: endDate.value,
       days: valid.days,
       location: locationInput.value.trim(),
+      hunters: Number(hunterCountInput.value),
       games: getSelectedGames(),
       tripStyle: tripStyle.value,
       withDog: withDog.checked,
@@ -501,7 +576,7 @@
   }
 
   function tripSignature(ctx) {
-    return [ctx.startDate, ctx.endDate, ctx.location.toLowerCase(), ...selectedGamesFor(ctx).slice().sort(), ctx.tripStyle, ctx.withDog, ctx.processing].join('|');
+    return [ctx.startDate, ctx.endDate, ctx.location.toLowerCase(), safeHunterCount(ctx), ...selectedGamesFor(ctx).slice().sort(), ctx.tripStyle, ctx.withDog, ctx.processing].join('|');
   }
 
   function renderResults() {
@@ -514,6 +589,7 @@
     el('summaryChips').innerHTML = [
       `${formatDate(ctx.startDate)} – ${formatDate(ctx.endDate)}`,
       `${ctx.days} day${ctx.days === 1 ? '' : 's'}`,
+      `${safeHunterCount(ctx)} hunter${safeHunterCount(ctx) === 1 ? '' : 's'}`,
       STYLE_LABELS[ctx.tripStyle],
       ...gameNames,
       ctx.withDog ? 'Dog hunt' : null
@@ -626,7 +702,7 @@
   }
 
   function groupByCategory(items) {
-    const order = ['Documents & Legal','Hunting Gear','Safety & Navigation','Clothing','Food & Water','Camp & Sleep','Vehicle','Game Care','Dog Gear','Miscellaneous'];
+    const order = ['Documents & Legal','Hunting Gear','Safety & Navigation','Clothing',FOOD_CATEGORY,'Camp & Sleep','Vehicle','Game Care','Dog Gear','Miscellaneous'];
     const map = new Map();
     for (const cat of order) map.set(cat, []);
     for (const it of items) {
@@ -665,13 +741,15 @@
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       const parsed = raw ? JSON.parse(raw) : {};
+      const migrateItem = (it) => it && it.category === 'Food & Water' ? { ...it, category: FOOD_CATEGORY } : it;
+      const trip = parsed.trip ? { ...parsed.trip, hunters: safeHunterCount(parsed.trip) } : null;
       return {
-        trip: parsed.trip || null,
+        trip,
         geo: parsed.geo || null,
         weather: parsed.weather || null,
-        items: Array.isArray(parsed.items) ? parsed.items : [],
+        items: Array.isArray(parsed.items) ? parsed.items.map(migrateItem) : [],
         checked: parsed.checked || {},
-        customItems: Array.isArray(parsed.customItems) ? parsed.customItems : [],
+        customItems: Array.isArray(parsed.customItems) ? parsed.customItems.map(migrateItem) : [],
         tripSignature: parsed.tripSignature || ''
       };
     } catch {
@@ -689,6 +767,7 @@
     startDate.value = t.startDate || '';
     endDate.value = t.endDate || '';
     locationInput.value = t.location || '';
+    hunterCountInput.value = String(safeHunterCount(t));
     setSelectedGames(selectedGamesFor(t));
     tripStyle.value = t.tripStyle || 'vehicle';
     withDog.checked = Boolean(t.withDog);

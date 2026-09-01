@@ -4,6 +4,7 @@ An iPhone-friendly Progressive Web App that generates a checkable hunting-trip p
 
 - Start and end dates / duration
 - Hunt location
+- Number of hunters in the party
 - One or more game species / hunt types
 - Trip style
 - Whether a dog is hunting with you
@@ -12,6 +13,7 @@ An iPhone-friendly Progressive Web App that generates a checkable hunting-trip p
 
 ## Features
 
+- Party-size-aware Food / Snacks / Beer / Water provisioning with calculated total water, meal servings, snack portions, electrolytes, emergency food, and optional post-hunt drinks
 - Multi-species hunt support with game-specific packing logic for upland birds, waterfowl, dove, deer, turkey, hogs, western big game, small game, and predator hunts
 - Smart merging of shared gear so mixed-species lists avoid duplicate coolers, knives, navigation gear, and other overlapping items
 - Conditional hot/cold/rain/wind gear from Open-Meteo when a forecast is available
@@ -42,5 +44,7 @@ Packing logic developed with OpenAI assistance. Weather data is provided by Open
 7. Tap **Share → Add to Home Screen**.
 
 ## Notes
+
+Water and food quantities are planning baselines, not medical or survival guarantees; increase reserves for heat, exertion, remoteness, delays, and limited resupply. Optional alcohol is explicitly post-hunt only, for legal-age adults, after weapons are secured and when nobody will drive or perform safety-critical tasks.
 
 The app intentionally does not make legal determinations. Always verify current hunting regulations, season dates, access rules, legal methods, tagging, ammunition restrictions, and closures with the responsible agencies.

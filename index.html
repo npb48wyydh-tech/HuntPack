@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Hunting Packing List" />
-  <meta name="description" content="A smart, checkable hunting-trip packing list generator." />
+  <meta name="description" content="A smart hunting packing list with party-size food, snack, beer, and water planning." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icons/icon-180.png" />
   <link rel="icon" href="icons/icon-192.png" />
@@ -52,6 +52,12 @@
             <span>Location</span>
             <input id="location" name="location" type="text" autocomplete="off" placeholder="e.g. Black Gap WMA, Texas" required />
             <small>City, county, WMA, forest, or region works. Live weather is used when available.</small>
+          </label>
+
+          <label class="field hunter-count-field">
+            <span>Number of hunters</span>
+            <input id="hunterCount" name="hunterCount" type="number" inputmode="numeric" min="1" max="20" step="1" value="1" required />
+            <small>Food, snacks, water, electrolytes, and optional camp drinks scale to the whole hunting party.</small>
           </label>
 
           <fieldset class="game-fieldset">
@@ -219,7 +225,7 @@
           <option>Hunting Gear</option>
           <option>Clothing</option>
           <option>Safety & Navigation</option>
-          <option>Food & Water</option>
+          <option>Food / Snacks / Beer / Water</option>
           <option>Camp & Sleep</option>
           <option>Vehicle</option>
           <option>Game Care</option>
@@ -241,7 +247,7 @@
         </div>
         <button id="closeAboutBtn" class="icon-btn" type="button" aria-label="Close">×</button>
       </div>
-      <p>This app builds a practical checklist from your hunt type, trip length, travel style, location, and forecast conditions when available.</p>
+      <p>This app builds a practical checklist from your hunt type, party size, trip length, travel style, location, and forecast conditions when available. Food, snacks, water, electrolytes, and optional camp drinks are scaled to the hunting party.</p>
       <p>Your trip and checkmarks are stored only in this browser. The app does not require an account.</p>
       <div class="about-credit">
         <strong>Developer</strong>
